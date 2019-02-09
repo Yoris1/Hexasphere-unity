@@ -1,29 +1,45 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
 using UnityEngine;
 
+[RequireComponent(typeof(MeshFilter))]
 public class Hexasphere : MonoBehaviour
 {
-    public float size = 20;
+    public readonly float size = 60; // Recommended to not change, but change the offset and size in the transform. 
     public int subdivisions = 2;
     public float offset = 6;
-
-    Mesh mesh;
     MeshFilter meshFilter;
     void Start()
     {
+        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        stopwatch.Start();
         meshFilter = GetComponent<MeshFilter>();
-        mesh = new Mesh();
+        meshFilter.mesh = createHexasphere(size, offset, subdivisions);
+        stopwatch.Stop();
+        Debug.Log("Generating first mesh. operation took: " + stopwatch.ElapsedMilliseconds + "ms");
+
+        stopwatch.Reset();
+
+        stopwatch.Start();
+        GameObject inside = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        inside.GetComponent<MeshFilter>().mesh = createHexasphere(size + offset - (offset / 12), -0.1f, subdivisions);
+        inside.transform.parent = this.transform;
+        stopwatch.Stop();
+        Debug.Log("Generating inside(second) mesh. operation took: " + stopwatch.ElapsedMilliseconds + "ms");
+    }
+    Mesh createHexasphere(float size, float offset, int subdivisions)
+    { 
+        Mesh mesh = new Mesh();
         mesh.name = "Hexasphere";
-        HexagonSphere hex = new HexagonSphere(size-offset, subdivisions, offset);
+        HexagonSphere hex = new HexagonSphere((size - offset) / 2, subdivisions, offset);
         Vector3[] vertices = hex.getNewVertices();
         int[] triangles = hex.getNewTriangles(vertices.ToList());
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.normals = hex.getNormals();
-        meshFilter.mesh = mesh;
-        
+        return mesh;
     }
 }
 
@@ -60,7 +76,7 @@ public class HexagonSphere
         foreach (Face face in faces)
         {
             face.findNeighbours(faces);
-            face.fixRadius(size * 2);
+            face.fixRadius(size);
             face.storePoints(storage);
             face.setOffset(offset);
         }
