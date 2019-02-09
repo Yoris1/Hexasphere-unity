@@ -295,7 +295,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size: 20
-  subdivisions: 1
+  subdivisions: 2
+  offset: 5
 --- !u!4 &1249935989
 Transform:
   m_ObjectHideFlags: 0
@@ -327,7 +328,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: f5631067ef4bd0d43a5e14adf0f9b443, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

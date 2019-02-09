@@ -7,13 +7,14 @@ public class Hexasphere : MonoBehaviour
 {
     public int size = 20;
     public int subdivisions = 1;
+    public float offset;
     Mesh mesh;
     MeshFilter meshFilter;
     void Start()
     {
         meshFilter = GetComponent<MeshFilter>();
         mesh = new Mesh();
-        HexagonSphere hex = new HexagonSphere(size, subdivisions);
+        HexagonSphere hex = new HexagonSphere(size, subdivisions, offset);
         Vector3[] vertices = hex.getNewVertices();
         int[] triangles = hex.getNewTriangles(vertices.ToList());
         mesh.vertices = vertices;
@@ -30,7 +31,7 @@ public class HexagonSphere
     List<FinalFace> finalFaces;
     Face[] faces;
     Vector3[] centroidPoints;
-    public HexagonSphere(int size, int subdivisions)
+    public HexagonSphere(int size, int subdivisions, float offset)
     {
         this.size = size;
         this.subdivisions = subdivisions;
@@ -46,10 +47,10 @@ public class HexagonSphere
             face.findNeighbours(faces);
             face.fixRadius(size * 2);
             face.storePoints(storage);
+            face.setOffset(offset);
         }
 
         finalFaces = storage.findShapeFaces();
-        //finalFaces[0].logCoords(); 
     }
     public Vector3[] getNewVertices() {
         List<Vector3> array = new List<Vector3>();
@@ -57,7 +58,7 @@ public class HexagonSphere
         {
             foreach (Face f in face.getFaces())
             {
-                array.Add(f.getCentroidPoint());
+                array.Add(f.offsetCentroid(face));
             }
         }
         return array.ToArray();
@@ -196,14 +197,17 @@ public class Line
 public class FinalFace
 {
     List<Face> faces = new List<Face>();
-    float offset = 5;
-    int radius = 40;
+
     Vector3 normal;
     public FinalFace(List<Face> faces, Vector3 centerPoint)
     {
         this.faces = faces;
         rearangeFaces();
-        normal = new Vector3(centerPoint.x, centerPoint.y, centerPoint.z).normalized; // for some reason it is needed to create a new PVector for normalizing
+        normal = new Vector3(centerPoint.x, centerPoint.y, centerPoint.z).normalized; // probably buggy
+    }
+    public Vector3 getNormal()
+    {
+        return normal;
     }
     public Face[] getFaces()
     {
@@ -212,34 +216,69 @@ public class FinalFace
     public Vector3[] getTriangles()
     {
         List<Vector3> array = new List<Vector3>();
-        
-        if(faces.Count == 5)
+
+        if (faces.Count == 5)
         {
-            array.Add(faces[0].getCentroidPoint());
-            array.Add(faces[1].getCentroidPoint());
-            array.Add(faces[2].getCentroidPoint()); // first triangle
+            array.Add(faces[0].offsetCentroid(this));
+            array.Add(faces[1].offsetCentroid(this));
+            array.Add(faces[2].offsetCentroid(this)); // first triangle
 
-            array.Add(faces[2].getCentroidPoint());
-            array.Add(faces[3].getCentroidPoint());
-            array.Add(faces[4].getCentroidPoint()); // second triangle
+            array.Add(faces[2].offsetCentroid(this));
+            array.Add(faces[3].offsetCentroid(this));
+            array.Add(faces[4].offsetCentroid(this)); // second triangle
 
-            array.Add(faces[4].getCentroidPoint());
-            array.Add(faces[0].getCentroidPoint());
-            array.Add(faces[2].getCentroidPoint()); // third triangle
+            array.Add(faces[4].offsetCentroid(this));
+            array.Add(faces[0].offsetCentroid(this));
+            array.Add(faces[2].offsetCentroid(this)); // third triangle
 
             // second side: 
 
-            array.Add(faces[0].getCentroidPoint());
-            array.Add(faces[4].getCentroidPoint());
-            array.Add(faces[1].getCentroidPoint()); // first triangle
+            array.Add(faces[0].offsetCentroid(this));
+            array.Add(faces[4].offsetCentroid(this));
+            array.Add(faces[1].offsetCentroid(this)); // first triangle
 
-            array.Add(faces[4].getCentroidPoint());
-            array.Add(faces[3].getCentroidPoint());
-            array.Add(faces[2].getCentroidPoint()); // second triangle
+            array.Add(faces[4].offsetCentroid(this));
+            array.Add(faces[3].offsetCentroid(this));
+            array.Add(faces[2].offsetCentroid(this)); // second triangle
 
-            array.Add(faces[2].getCentroidPoint());
-            array.Add(faces[1].getCentroidPoint());
-            array.Add(faces[4].getCentroidPoint()); // third triangle
+            array.Add(faces[2].offsetCentroid(this));
+            array.Add(faces[1].offsetCentroid(this));
+            array.Add(faces[4].offsetCentroid(this)); // third triangle
+        } else if (faces.Count == 6)
+        {
+            array.Add(faces[0].offsetCentroid(this));
+            array.Add(faces[1].offsetCentroid(this));
+            array.Add(faces[2].offsetCentroid(this)); // first triangle
+
+            array.Add(faces[2].offsetCentroid(this));
+            array.Add(faces[3].offsetCentroid(this)); 
+            array.Add(faces[0].offsetCentroid(this)); // I really don't think these comments
+
+            array.Add(faces[3].offsetCentroid(this));
+            array.Add(faces[4].offsetCentroid(this)); 
+            array.Add(faces[5].offsetCentroid(this)); // are necessary anymore
+
+            array.Add(faces[5].offsetCentroid(this));
+            array.Add(faces[0].offsetCentroid(this));
+            array.Add(faces[3].offsetCentroid(this)); // fourth triangle
+
+            // second side
+
+            array.Add(faces[0].offsetCentroid(this));
+            array.Add(faces[5].offsetCentroid(this));
+            array.Add(faces[1].offsetCentroid(this)); // first triangle
+
+            array.Add(faces[5].offsetCentroid(this));
+            array.Add(faces[4].offsetCentroid(this));
+            array.Add(faces[3].offsetCentroid(this)); // second triangle
+
+            array.Add(faces[3].offsetCentroid(this));
+            array.Add(faces[2].offsetCentroid(this));
+            array.Add(faces[1].offsetCentroid(this)); // third triangle
+
+            array.Add(faces[1].offsetCentroid(this));
+            array.Add(faces[5].offsetCentroid(this));
+            array.Add(faces[3].offsetCentroid(this)); // fourth triangle
         }
 
         return array.ToArray();
@@ -281,11 +320,16 @@ public class FinalFace
 }
 public class Face
 {
+    float offset = 5;
     public Vector3 p1;
     public Vector3 p2;
     public Vector3 p3;
     Line[] lines = new Line[3];
     public Face[] neighbours = new Face[3];
+    public void setOffset(float offset)
+    {
+        this.offset = offset;
+    }
     public Face(Vector3 point1, Vector3 point2, Vector3 point3)
     {
         this.p1 = point1;
@@ -316,6 +360,12 @@ public class Face
     {
         return multiplyVector(new Vector3((p1.x + p2.x + p3.x) / 3, (p1.y + p2.y + p3.y) / 3, (p1.z + p2.z + p3.z) / 3), 1.07f);
     }
+
+    public Vector3 offsetCentroid(FinalFace f) 
+    {
+        return getCentroidPoint() + (f.getNormal()* offset);
+    }
+
     public void findNeighbours(Face[] faces)
     {
         int neighboursSize = 0;
