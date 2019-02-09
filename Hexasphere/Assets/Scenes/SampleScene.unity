@@ -294,8 +294,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffd031ea76667e541a294a87b7778d60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  subdivisions: 2
+  subtract: 1
+  subdivisions: 3
   offset: 6
+  insideMaterial: {fileID: 2100000, guid: 1a542d7189158b644b0db0a5d25f014d, type: 2}
 --- !u!4 &1249935989
 Transform:
   m_ObjectHideFlags: 0

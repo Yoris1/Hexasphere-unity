@@ -8,9 +8,13 @@ using UnityEngine;
 public class Hexasphere : MonoBehaviour
 {
     public readonly float size = 60; // Recommended to not change, but change the offset and size in the transform. 
+    [Tooltip("If the inside is bigger than the outside, increase this")]
+    public float subtract = 1;
     public int subdivisions = 2;
     public float offset = 6;
     MeshFilter meshFilter;
+
+    public Material insideMaterial;
     void Start()
     {
         System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
@@ -24,8 +28,11 @@ public class Hexasphere : MonoBehaviour
 
         stopwatch.Start();
         GameObject inside = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        inside.GetComponent<MeshFilter>().mesh = createHexasphere(size + offset - (offset / 12), -0.1f, subdivisions);
+        inside.GetComponent<MeshFilter>().mesh = createHexasphere(size + offset - subtract, -0.1f, subdivisions);
         inside.transform.parent = this.transform;
+        MeshRenderer insideRenderer = inside.GetComponent<MeshRenderer>();
+        insideRenderer.material = insideMaterial;
+        insideRenderer.receiveShadows = false; // configure to your liking.
         stopwatch.Stop();
         Debug.Log("Generating inside(second) mesh. operation took: " + stopwatch.ElapsedMilliseconds + "ms");
     }
