@@ -295,8 +295,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size: 20
-  subdivisions: 2
-  offset: 5
+  subdivisions: 3
+  offset: 6
 --- !u!4 &1249935989
 Transform:
   m_ObjectHideFlags: 0

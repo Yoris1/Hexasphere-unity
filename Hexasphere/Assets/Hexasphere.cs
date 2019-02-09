@@ -5,20 +5,23 @@ using UnityEngine;
 
 public class Hexasphere : MonoBehaviour
 {
-    public int size = 20;
-    public int subdivisions = 1;
-    public float offset;
+    public float size = 20;
+    public int subdivisions = 2;
+    public float offset = 6;
+
     Mesh mesh;
     MeshFilter meshFilter;
     void Start()
     {
         meshFilter = GetComponent<MeshFilter>();
         mesh = new Mesh();
-        HexagonSphere hex = new HexagonSphere(size, subdivisions, offset);
+        mesh.name = "Hexasphere";
+        HexagonSphere hex = new HexagonSphere(size-offset, subdivisions, offset);
         Vector3[] vertices = hex.getNewVertices();
         int[] triangles = hex.getNewTriangles(vertices.ToList());
         mesh.vertices = vertices;
         mesh.triangles = triangles;
+        mesh.normals = hex.getNormals();
         meshFilter.mesh = mesh;
         
     }
@@ -26,12 +29,24 @@ public class Hexasphere : MonoBehaviour
 
 public class HexagonSphere
 {
-    int size;
+    float size;
     int subdivisions;
     List<FinalFace> finalFaces;
     Face[] faces;
     Vector3[] centroidPoints;
-    public HexagonSphere(int size, int subdivisions, float offset)
+    public Vector3[] getNormals()
+    {
+        List<Vector3> normals = new List<Vector3>();
+        foreach(FinalFace face in finalFaces)
+        {
+            for(int i = 0; i < face.getFaces().Length; i++)
+            {
+                normals.Add(face.getNormal());
+            }
+        }
+        return normals.ToArray();
+    }
+    public HexagonSphere(float size, int subdivisions, float offset)
     {
         this.size = size;
         this.subdivisions = subdivisions;
