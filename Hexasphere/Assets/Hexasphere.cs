@@ -217,68 +217,92 @@ public class FinalFace
     {
         List<Vector3> array = new List<Vector3>();
 
+        bool frontFace = false;
+        // find squared triangle area 
+
+        Vector3 P = faces[2].offsetCentroid(this);
+        Vector3 Q = faces[1].offsetCentroid(this);
+        Vector3 R = faces[4].offsetCentroid(this);
+
+        Vector3 PR = R - P;
+        Vector3 PQ = Q - P;
+
+        Vector3 cross = Vector3.Cross(PR, PQ);
+
+        
+        frontFace = Vector3.Dot(cross, normal) <= 0.3f ? false : true;
+
+
         if (faces.Count == 5)
         {
-            array.Add(faces[0].offsetCentroid(this));
-            array.Add(faces[1].offsetCentroid(this));
-            array.Add(faces[2].offsetCentroid(this)); // first triangle
+            if (frontFace)
+            {
+                array.Add(faces[0].offsetCentroid(this));
+                array.Add(faces[1].offsetCentroid(this));
+                array.Add(faces[2].offsetCentroid(this)); // first triangle
 
-            array.Add(faces[2].offsetCentroid(this));
-            array.Add(faces[3].offsetCentroid(this));
-            array.Add(faces[4].offsetCentroid(this)); // second triangle
+                array.Add(faces[2].offsetCentroid(this));
+                array.Add(faces[3].offsetCentroid(this));
+                array.Add(faces[4].offsetCentroid(this)); // second triangle
 
-            array.Add(faces[4].offsetCentroid(this));
-            array.Add(faces[0].offsetCentroid(this));
-            array.Add(faces[2].offsetCentroid(this)); // third triangle
+                array.Add(faces[4].offsetCentroid(this));
+                array.Add(faces[0].offsetCentroid(this));
+                array.Add(faces[2].offsetCentroid(this)); // third triangle
+            } else
+            {
+                array.Add(faces[0].offsetCentroid(this));
+                array.Add(faces[4].offsetCentroid(this));
+                array.Add(faces[1].offsetCentroid(this)); // first triangle
 
-            // second side: 
+                array.Add(faces[4].offsetCentroid(this));
+                array.Add(faces[3].offsetCentroid(this));
+                array.Add(faces[2].offsetCentroid(this)); // second triangle
 
-            array.Add(faces[0].offsetCentroid(this));
-            array.Add(faces[4].offsetCentroid(this));
-            array.Add(faces[1].offsetCentroid(this)); // first triangle
+                array.Add(faces[2].offsetCentroid(this));
+                array.Add(faces[1].offsetCentroid(this));
+                array.Add(faces[4].offsetCentroid(this)); // third triangle
+            }
 
-            array.Add(faces[4].offsetCentroid(this));
-            array.Add(faces[3].offsetCentroid(this));
-            array.Add(faces[2].offsetCentroid(this)); // second triangle
-
-            array.Add(faces[2].offsetCentroid(this));
-            array.Add(faces[1].offsetCentroid(this));
-            array.Add(faces[4].offsetCentroid(this)); // third triangle
+            
         } else if (faces.Count == 6)
         {
-            array.Add(faces[0].offsetCentroid(this));
-            array.Add(faces[1].offsetCentroid(this));
-            array.Add(faces[2].offsetCentroid(this)); // first triangle
+            if (frontFace)
+            {
+                array.Add(faces[0].offsetCentroid(this));
+                array.Add(faces[1].offsetCentroid(this));
+                array.Add(faces[2].offsetCentroid(this)); // first triangle
 
-            array.Add(faces[2].offsetCentroid(this));
-            array.Add(faces[3].offsetCentroid(this)); 
-            array.Add(faces[0].offsetCentroid(this)); // I really don't think these comments
+                array.Add(faces[2].offsetCentroid(this));
+                array.Add(faces[3].offsetCentroid(this));
+                array.Add(faces[0].offsetCentroid(this)); // I really don't think these comments
 
-            array.Add(faces[3].offsetCentroid(this));
-            array.Add(faces[4].offsetCentroid(this)); 
-            array.Add(faces[5].offsetCentroid(this)); // are necessary anymore
+                array.Add(faces[3].offsetCentroid(this));
+                array.Add(faces[4].offsetCentroid(this));
+                array.Add(faces[5].offsetCentroid(this)); // are necessary anymore
 
-            array.Add(faces[5].offsetCentroid(this));
-            array.Add(faces[0].offsetCentroid(this));
-            array.Add(faces[3].offsetCentroid(this)); // fourth triangle
+                array.Add(faces[5].offsetCentroid(this));
+                array.Add(faces[0].offsetCentroid(this));
+                array.Add(faces[3].offsetCentroid(this)); // fourth triangle
+            }
+            else
+            {
+                // second side
+                array.Add(faces[0].offsetCentroid(this));
+                array.Add(faces[5].offsetCentroid(this));
+                array.Add(faces[1].offsetCentroid(this)); // first triangle
 
-            // second side
+                array.Add(faces[5].offsetCentroid(this));
+                array.Add(faces[4].offsetCentroid(this));
+                array.Add(faces[3].offsetCentroid(this)); // second triangle
 
-            array.Add(faces[0].offsetCentroid(this));
-            array.Add(faces[5].offsetCentroid(this));
-            array.Add(faces[1].offsetCentroid(this)); // first triangle
+                array.Add(faces[3].offsetCentroid(this));
+                array.Add(faces[2].offsetCentroid(this));
+                array.Add(faces[1].offsetCentroid(this)); // third triangle
 
-            array.Add(faces[5].offsetCentroid(this));
-            array.Add(faces[4].offsetCentroid(this));
-            array.Add(faces[3].offsetCentroid(this)); // second triangle
-
-            array.Add(faces[3].offsetCentroid(this));
-            array.Add(faces[2].offsetCentroid(this));
-            array.Add(faces[1].offsetCentroid(this)); // third triangle
-
-            array.Add(faces[1].offsetCentroid(this));
-            array.Add(faces[5].offsetCentroid(this));
-            array.Add(faces[3].offsetCentroid(this)); // fourth triangle
+                array.Add(faces[1].offsetCentroid(this));
+                array.Add(faces[5].offsetCentroid(this));
+                array.Add(faces[3].offsetCentroid(this)); // fourth triangle
+            }
         }
 
         return array.ToArray();
