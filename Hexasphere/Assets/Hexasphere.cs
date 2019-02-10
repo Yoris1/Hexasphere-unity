@@ -30,6 +30,7 @@ public class Hexasphere : MonoBehaviour
         GameObject inside = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         inside.GetComponent<MeshFilter>().mesh = createHexasphere(size + offset - subtract, -0.1f, subdivisions);
         inside.transform.parent = this.transform;
+        inside.transform.position = this.transform.position;
         MeshRenderer insideRenderer = inside.GetComponent<MeshRenderer>();
         insideRenderer.material = insideMaterial;
         insideRenderer.receiveShadows = false; // configure to your liking.
