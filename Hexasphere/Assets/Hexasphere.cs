@@ -41,8 +41,10 @@ public class Hexasphere : MonoBehaviour
         Mesh mesh = new Mesh();
         mesh.name = "Hexasphere";
         HexagonSphere hex = new HexagonSphere((size - offset) / 2, subdivisions, offset);
+
+        
         Vector3[] vertices = hex.getNewVertices();
-        int[] triangles = hex.getNewTriangles(vertices.ToList());
+        int[] triangles = hex.getNewTriangles(vertices.ToList()); // other performance hog!
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.normals = hex.getNormals();
@@ -71,6 +73,7 @@ public class HexagonSphere
     }
     public HexagonSphere(float size, int subdivisions, float offset)
     {
+        
         this.size = size;
         this.subdivisions = subdivisions;
         finalFaces = new List<FinalFace>();
@@ -82,12 +85,11 @@ public class HexagonSphere
         subdivideFaces(subdivisions);
         foreach (Face face in faces)
         {
-            face.findNeighbours(faces);
+            //face.findNeighbours(faces);
             face.fixRadius(size);
             face.storePoints(storage);
             face.setOffset(offset);
         }
-
         finalFaces = storage.findShapeFaces();
     }
     public Vector3[] getNewVertices() {
@@ -197,7 +199,6 @@ public class Storage
     public List<FinalFace> findShapeFaces()
     {
         List<FinalFace> finalFaces = new List<FinalFace>();
-
         foreach (KeyValuePair<Vector3, List<Face>> pair in data)
         {
             List<Face> list = data[pair.Key];
@@ -211,25 +212,6 @@ public class Storage
         }
         return finalFaces;
 
-    }
-}
-public class Line
-{
-    Vector3 s, e;
-
-    public Line(Vector3 start, Vector3 end)
-    {
-        this.s = start;
-        this.e = end;
-    }
-
-    public Vector3 getStart()
-    {
-        return s;
-    }
-    public Vector3 getEnd()
-    {
-        return e;
     }
 }
 public class FinalFace
@@ -346,11 +328,6 @@ public class FinalFace
         return array.ToArray();
 
     }
-    public void render()
-    {
-        // do unity line rendering for testing;
-    }
-    
     public void rearangeFaces()
     {
         List<Face> rearanged = new List<Face>();
@@ -358,16 +335,24 @@ public class FinalFace
         Face lastFace = faces[0];
         Face firstFace = lastFace;
         faces.Remove(lastFace);
-        for (int i = 0; i < 6; i++)
+        while(faces.Count > 0) // probably replace with a for loop that uses the initial size of faces
         {
-            for (int j = 0; j < 3; j++)
+            foreach(Face face in faces)
             {
-                Face currentFace = lastFace.neighbours[j];
-                if (faces.Contains(currentFace))
+                Vector3[] lastFacePoints = {lastFace.p1, lastFace.p2, lastFace.p3};
+                int sharedPoints = 0;
+                if (lastFacePoints.Contains(face.p1))
+                    ++sharedPoints;
+                if (lastFacePoints.Contains(face.p2))
+                    ++sharedPoints;
+                if (lastFacePoints.Contains(face.p3))
+                    ++sharedPoints;
+                if(sharedPoints == 2)
                 {
-                    faces.Remove(currentFace);
-                    rearanged.Add(currentFace);
-                    lastFace = currentFace;
+                    rearanged.Add(face);
+                    faces.Remove(face); // might cause c# to flip out.
+                    lastFace = face;
+                    break;
                 }
             }
         }
@@ -386,7 +371,6 @@ public class Face
     public Vector3 p1;
     public Vector3 p2;
     public Vector3 p3;
-    Line[] lines = new Line[3];
     public Face[] neighbours = new Face[3];
     public void setOffset(float offset)
     {
@@ -397,10 +381,6 @@ public class Face
         this.p1 = point1;
         this.p2 = point2;
         this.p3 = point3;
-
-        lines[0] = new Line(p1, p2);
-        lines[1] = new Line(p2, p3);
-        lines[2] = new Line(p3, p1);
     }
 
     public Face[] subdivide()
@@ -427,24 +407,6 @@ public class Face
     {
         return getCentroidPoint() + (f.getNormal()* offset);
     }
-
-    public void findNeighbours(Face[] faces)
-    {
-        int neighboursSize = 0;
-        foreach (Face face in faces)
-        {
-            foreach (Line line1 in face.lines)
-            {
-                foreach (Line line2 in this.lines)
-                {
-                    if (Comparer.compareLines(line1, line2) && face != this)
-                    {
-                        neighbours[neighboursSize++] = face;
-                    }
-                }
-            }
-        }
-    }
     public float correctToRadius(float sphereRadius, Vector3 p)
     {
         float currentDistance = Mathf.Sqrt((p.x * p.x) + (p.y * p.y) + (p.z * p.z));
@@ -466,33 +428,5 @@ public class Face
         storage.addPoint(p1, this);
         storage.addPoint(p2, this);
         storage.addPoint(p3, this);
-    }
-}
-static class Comparer
-{
-    public static bool compareLines(Line l1, Line l2)
-    {
-        Vector3 start1 = l1.getStart();
-        Vector3 start2 = l2.getStart();
-
-        Vector3 end1 = l1.getEnd();
-        Vector3 end2 = l2.getEnd();
-
-        if (areVectorsTheSame(start1, start2))
-        {
-            return areVectorsTheSame(end1, end2);
-        }
-        else if (areVectorsTheSame(start1, end2))
-        {
-            return areVectorsTheSame(end1, start2);
-        }
-        else
-        {
-            return false;
-        }
-    }
-    public static bool areVectorsTheSame(Vector3 v1, Vector3 v2)
-    {
-        return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z);
     }
 }
