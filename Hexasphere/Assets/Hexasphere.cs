@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,7 +20,7 @@ public class Hexasphere : MonoBehaviour
         System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
         stopwatch.Start();
         meshFilter = GetComponent<MeshFilter>();
-        meshFilter.mesh = createHexasphere(size, offset, subdivisions);
+        meshFilter.mesh = createHexasphere((size * subdivisions / 2), offset, subdivisions);
         stopwatch.Stop();
         Debug.Log("Generating first mesh. operation took: " + stopwatch.ElapsedMilliseconds + "ms");
 
@@ -28,7 +28,7 @@ public class Hexasphere : MonoBehaviour
 
         stopwatch.Start();
         GameObject inside = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        inside.GetComponent<MeshFilter>().mesh = createHexasphere(size + offset - subtract, -0.1f, subdivisions);
+        inside.GetComponent<MeshFilter>().mesh = createHexasphere((size*subdivisions/2) + offset - subtract, -0.1f, subdivisions);
         inside.transform.parent = this.transform;
         inside.transform.position = this.transform.position;
         MeshRenderer insideRenderer = inside.GetComponent<MeshRenderer>();
@@ -41,18 +41,18 @@ public class Hexasphere : MonoBehaviour
     { 
         Mesh mesh = new Mesh();
         mesh.name = "Hexasphere";
+        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         HexagonSphere hex = new HexagonSphere((size - offset) / 2, subdivisions, offset);
 
-        
-        Vector3[] vertices = hex.getNewVertices();
-        int[] triangles = hex.getNewTriangles(vertices.ToList()); // other performance hog!
+        FinalStorage storage = new FinalStorage();
+        Vector3[] vertices = hex.getNewVertices(storage);
+        int[] triangles = hex.getNewTriangles(vertices.ToList(), storage); // other performance hog!
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.normals = hex.getNormals();
         return mesh;
     }
 }
-
 public class HexagonSphere
 {
     float size;
@@ -84,34 +84,39 @@ public class HexagonSphere
         FillFaces();
 
         subdivideFaces(subdivisions);
+
         foreach (Face face in faces)
         {
-            //face.findNeighbours(faces);
             face.fixRadius(size);
             face.storePoints(storage);
             face.setOffset(offset);
         }
         finalFaces = storage.findShapeFaces();
+        
     }
-    public Vector3[] getNewVertices() {
+    public Vector3[] getNewVertices(FinalStorage storage)
+    {
         List<Vector3> array = new List<Vector3>();
+        int i = 0;
         foreach (FinalFace face in finalFaces)
         {
             foreach (Face f in face.getFaces())
             {
-                array.Add(f.offsetCentroid(face));
+                Vector3 vert = f.offsetCentroid(face);
+                array.Add(vert);
+                storage.addData(vert, i++);
             }
         }
         return array.ToArray();
     }
-    public int[] getNewTriangles(List<Vector3> vertices)
+    public int[] getNewTriangles(List<Vector3> vertices, FinalStorage storage)
     {
         List<int> array = new List<int>();
         foreach (FinalFace face in finalFaces)
         {
             foreach (Vector3 t in face.getTriangles())
             {
-                array.Add(vertices.IndexOf(t));
+                array.Add(storage.getData(t));
             }
         }
         return array.ToArray();
@@ -183,6 +188,7 @@ public class Storage
 {
     private Dictionary<Vector3, List<Face>> data = new Dictionary<Vector3, List<Face>>();
 
+
     public void addPoint(Vector3 point, Face face)
     {
         if (data.ContainsKey(point))
@@ -251,7 +257,7 @@ public class FinalFace
         Vector3 cross = Vector3.Cross(PR, PQ);
 
         
-        frontFace = Vector3.Dot(cross, normal) <= 0.3f ? false : true;
+        frontFace = Vector3.Dot(cross, normal) <= 0.15f ? false : true;
 
 
         if (faces.Count == 5)
@@ -429,5 +435,21 @@ public class Face
         storage.addPoint(p1, this);
         storage.addPoint(p2, this);
         storage.addPoint(p3, this);
+    }
+}
+public class FinalStorage
+{
+    Dictionary<Vector3, int> data = new Dictionary<Vector3, int>();
+    public void addData(Vector3 vec, int position)
+    {
+        data.Add(vec, position);
+    }
+    public int getData(Vector3 vec)
+    {
+        return data[vec];
+    }
+    public int dataKeys()
+    {
+        return data.Count;
     }
 }
