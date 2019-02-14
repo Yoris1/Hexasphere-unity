@@ -41,7 +41,7 @@ public class Hexasphere : MonoBehaviour
     { 
         Mesh mesh = new Mesh();
         mesh.name = "Hexasphere";
-        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        mesh.indexFormat = subdivisions > 5? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16;
         HexagonSphere hex = new HexagonSphere((size - offset) / 2, subdivisions, offset);
 
         FinalStorage storage = new FinalStorage();
